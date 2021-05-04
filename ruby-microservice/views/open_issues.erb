@@ -1,0 +1,11 @@
+<body>
+	<h3> Open Issues: </h3>
+    <% data.each do |keyword, keyword_results| %>
+    	<h4> <%= keyword %>, Triage Needed?: <%= keyword_results['triage_needed'].upcase %> </h4>
+    	<% keyword_results['issues'].each do |issue_number, issue_info| %>
+	    	<li>
+	    		<a href=<%= issue_info["html_url"] %>>  Issue <%= issue_number.to_s %>: <%=  issue_info["title"] %> </a>
+	    	</li>
+    	<% end %>
+    <% end %>	
+</body>

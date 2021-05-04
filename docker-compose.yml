@@ -1,0 +1,47 @@
+version: "3"
+services:
+  otel-collector:
+    image: otelcontribcol:latest
+    command: ["--config=/etc/otel-collector-config.yml", "--log-level=debug"]
+    ports:
+      - "55680:55680/tcp"
+      - "55681:55681/tcp"
+      - "55678:55678/tcp"
+      - "14268:14268/tcp"
+      - "4317:4317/tcp"
+      - "9411:9411/tcp"
+    volumes:
+      - ./otel-collector-config.yml:/etc/otel-collector-config.yml
+  ruby-microservice:
+    build:
+      context: ruby-microservice
+      dockerfile: Dockerfile
+    environment:
+      # was having trouble with the otlp export but jaeger also exists in core by default
+      - OTEL_EXPORTER_JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
+      - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=otel_sandbox,version=v1
+    depends_on:
+      - otel-collector
+      - redis
+    ports:
+      - "3000:3000/tcp"
+    logging:
+      driver: fluentd
+      options:
+        # Allow time for otel-collector to spin up, then forward fluentd logs to the fluentforwarder receiver.
+        fluentd-async-connect: "true"
+        # Use nanosecond precision
+        fluentd-sub-second-precision: "true"
+  redis:
+    image: redis
+    container_name: redis
+    ports:
+      - "6379:6379/tcp"
+  fluent-bit:
+    image: fluent/fluent-bit
+    volumes:
+      - ./fluent-bit/parsers.conf:/fluent-bit/etc/parsers.conf
+      - ./fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+    ports:
+      - "24224:24224" # fluentd
+      - "24224:24224/udp" # fluentd
