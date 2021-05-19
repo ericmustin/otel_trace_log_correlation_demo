@@ -23,3 +23,5 @@ gem 'opentelemetry-exporter-jaeger'
 gem "octokit", "~> 4.0"
 gem "github_api"
 
+gem 'ddtrace'
+

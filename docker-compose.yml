@@ -12,6 +12,23 @@ services:
       - "9411:9411/tcp"
     volumes:
       - ./otel-collector-config.yml:/etc/otel-collector-config.yml
+  # datadog-agent:
+  #   image: datadog/agent:latest
+  #   env_file:
+  #     - ~/sandbox.docker.env
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock:ro
+  #     - /proc/:/host/proc/:ro
+  #     - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+  #   ports:
+  #     - 8126:8126/tcp
+  #     - 8125:8125/udp
+  #   environment:
+  #     - DD_APM_ENABLED=true
+  #     - DD_APM_NON_LOCAL_TRAFFIC=true
+  #     - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
+  #     - DD_AC_EXCLUDE=name:datadog-agent
+  #     - DD_LOGS_ENABLED=TRUE
   ruby-microservice:
     build:
       context: ruby-microservice
@@ -19,9 +36,14 @@ services:
     environment:
       # was having trouble with the otlp export but jaeger also exists in core by default
       - OTEL_EXPORTER_JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
-      - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=otel_sandbox,version=v1
+      - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=otel_sandbox,version=v1,service.version=v1,service.name=sandbox_test_ruby
+      # - DD_AGENT_HOST=datadog-agent
+      # - DD_SERVICE=sandbox_test_ruby
+      # - DD_VERSION=v1
+      # - DD_ENV=otel_sandbox
     depends_on:
-      - otel-collector
+      # - otel-collector
+      - datadog-agent
       - redis
     ports:
       - "3000:3000/tcp"
